@@ -8,7 +8,7 @@ The production live-feed path uses the Upstox V3 MarketDataStreamer over WebSock
 
 Set these server-side secrets/environment variables:
 
-- `UPSTOX_ACCESS_TOKEN` — required to enable the live stream.
+- `UPSTOX_ANALYTICS_TOKEN` — free read-only Analytics Token used to enable the live stream.
 - `UPSTOX_INSTRUMENT_KEYS` — optional comma-separated instrument keys; leave empty for automatic NSE equity discovery.
 - `UPSTOX_MAX_INSTRUMENTS` — maximum subscription count; the code caps this at the provider's documented limit.
 
@@ -18,11 +18,11 @@ The backend keeps the latest ticks in memory and exposes them through `/api/mark
 
 ## Free-data fallback
 
-Without `UPSTOX_ACCESS_TOKEN`, the app falls back to the existing public market provider for development and yfinance for historical data. Free public feeds may be delayed, rate-limited, incomplete, or temporarily unavailable.
+Without `UPSTOX_ANALYTICS_TOKEN`, the app falls back to the existing public market provider for development and yfinance for historical data. Free public feeds may be delayed, rate-limited, incomplete, or temporarily unavailable.
 
 ## AI
 
-Amazon Bedrock is optional. The prediction service uses Claude for on-demand analysis of recent price behaviour, technical indicators and news. AI output is informational and does not guarantee future returns.
+Amazon Bedrock is optional and disabled by default. With the default settings, stock analysis uses a local technical model over public historical data and does not call a paid AI service. Set `BEDROCK_ENABLED=true` only if you intentionally have AWS credits/budget.
 
 ## Run
 
