@@ -1,7 +1,7 @@
 "use client";
 import {use,useEffect,useState} from "react";
 import Link from "next/link";
-const API=process.env.NEXT_PUBLIC_API_URL||"http://localhost:8000";
+const API = "";
 type Quote={symbol:string;name:string;price:number;change_pct:number;exchange:string};
 type Article={title:string;source:string;url:string;published_at:string};
 type Candle={time:string;open:number;high:number;low:number;close:number;volume:number};
