@@ -9,7 +9,7 @@ from .settings import settings
 
 class BedrockPredictor:
     def __init__(self):
-        self.client = boto3.client("bedrock-runtime", region_name=settings.aws_region)
+        self.client = boto3.client("bedrock-runtime", region_name=settings.aws_region) if settings.bedrock_enabled else None
 
     @staticmethod
     def _rsi(closes, period=14):
@@ -57,9 +57,37 @@ class BedrockPredictor:
             "news": news,
         }
 
+    @staticmethod
+    def _local_prediction(context, timeframe):
+        score = 50
+        reasons = []
+        risks = []
+        if context["price"] > context["sma20"]:
+            score += 12; reasons.append("Price is above the 20-day moving average.")
+        else:
+            score -= 12; reasons.append("Price is below the 20-day moving average.")
+        if context["sma20"] > context["sma50"]:
+            score += 12; reasons.append("The 20-day moving average is above the 50-day moving average.")
+        else:
+            score -= 12; reasons.append("The 20-day moving average is below the 50-day moving average.")
+        if context["return_20d_pct"] > 0:
+            score += 8; reasons.append("The 20-day return is positive.")
+        else:
+            score -= 8; reasons.append("The 20-day return is negative.")
+        rsi = context["rsi14"]
+        if rsi >= 70: score -= 8; risks.append("RSI is elevated; reversal risk is higher.")
+        elif rsi <= 30: score += 4; risks.append("RSI is low; reversal risk is elevated.")
+        if context["volatility_20d"] > 3: risks.append("Recent daily volatility is elevated.")
+        score = max(0, min(100, score))
+        signal = "GREEN" if score >= 62 else "RED" if score <= 38 else "NEUTRAL"
+        confidence = max(0.35, min(0.85, 0.35 + abs(score - 50) / 50))
+        if not risks: risks.append("Technical indicators do not guarantee future returns.")
+        return {"symbol": context["symbol"], "timeframe": timeframe, "signal": signal, "confidence": round(confidence,2), "horizon": timeframe, "summary": "Zero-cost technical analysis using public historical data; this is not Claude.", "rationale": reasons, "risks": risks, "technical_score": round(score), "news_sentiment": "UNKNOWN", "context": context, "provider": "local-technical"}
     def predict(self, symbol: str, timeframe: str):
         try:
             context = self._context(symbol)
+            if self.client is None:
+                return self._local_prediction(context, timeframe)
             prompt = f"""You are a financial-market analysis assistant for an Indian stock analytics application.
 Use the supplied quantitative market data and recent news as evidence. Do not invent prices, news, indicators, or facts.
 Return ONLY valid JSON with this schema:
