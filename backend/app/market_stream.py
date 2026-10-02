@@ -45,7 +45,7 @@ class MarketStreamManager:
 
     @property
     def enabled(self) -> bool:
-        return bool(settings.upstox_access_token)
+        return bool(settings.upstox_analytics_token)
 
     def status(self) -> dict[str, Any]:
         with self._lock:
