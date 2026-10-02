@@ -8,7 +8,15 @@ class FreeMarketProvider:
     def quotes(self)->list[Quote]:
         out=[]
         try:
-            data=yf.download([s+".NS" for s in SYMBOLS],period="5d",interval="1d",group_by="ticker",auto_adjust=False,progress=False,threads=True)
+            data=yf.download(
+                [s+".NS" for s in SYMBOLS],
+                period="5d",
+                interval="1d",
+                group_by="ticker",
+                auto_adjust=False,
+                progress=False,
+                threads=False,
+            )
             for s in SYMBOLS:
                 try:
                     frame=data[s+".NS"].dropna()
@@ -21,7 +29,38 @@ class FreeMarketProvider:
                 except Exception:
                     continue
         except Exception:
-            pass
+            data = None
+
+        # Yahoo Finance can occasionally reject or partially return a batch request.
+        # Fall back to individual ticker requests so one failed symbol does not
+        # make the entire market page empty.
+        if not out:
+            for s in SYMBOLS:
+                try:
+                    frame = yf.Ticker(s + ".NS").history(
+                        period="5d",
+                        interval="1d",
+                        auto_adjust=False,
+                    ).dropna()
+                    if frame.empty:
+                        continue
+                    last = frame.iloc[-1]
+                    close = float(last["Close"])
+                    previous = float(frame.iloc[-2]["Close"]) if len(frame) > 1 else close
+                    change = (close / previous - 1) * 100 if previous else 0
+                    out.append(
+                        Quote(
+                            symbol=s,
+                            name=s,
+                            exchange="NSE",
+                            price=close,
+                            change_pct=change,
+                            volume=int(last.get("Volume", 0) or 0),
+                        )
+                    )
+                except Exception:
+                    continue
+
         return out
 
     def news(self,symbol:str)->list[NewsArticle]:
