@@ -34,8 +34,23 @@ export default function Home(){
      catch(e){if(!cancelled)setError(e instanceof Error?e.message:"Market data unavailable");}
      finally{if(!cancelled)setLoading(false);}
    }
-   load(); const t=setInterval(load,60000); return()=>{cancelled=true;clearInterval(t)};
+   load();
+   return()=>{cancelled=true};
  },[]);
+
+ useEffect(()=>{
+   if(!quotes.length) return;
+   const symbols=quotes.slice(0,100).map(q=>q.symbol).join(",");
+   const source=new EventSource(`${API}/api/market/stream?symbols=${encodeURIComponent(symbols)}`);
+   const onQuotes=(event:MessageEvent)=>{try{
+     const incoming=JSON.parse(event.data) as Quote[];
+     if(!incoming.length) return;
+     setQuotes(current=>{const next=new Map(current.map(q=>[q.symbol,q]));incoming.forEach(q=>next.set(q.symbol,q));return Array.from(next.values())});
+   }catch{}};
+   source.addEventListener("quotes",onQuotes);
+   source.onerror=()=>{};
+   return()=>{source.removeEventListener("quotes",onQuotes);source.close()};
+ },[quotes.length]);
 
  const toggleWatch=(symbol:string)=>{const next=watch.includes(symbol)?watch.filter(x=>x!==symbol):[...watch,symbol];setWatch(next);localStorage.setItem("grow-watchlist",JSON.stringify(next));};
  const filtered=useMemo(()=>quotes.filter(q=>`${q.symbol} ${q.name}`.toLowerCase().includes(query.toLowerCase())),[quotes,query]);
@@ -46,7 +61,7 @@ export default function Home(){
 
  return <main className="app-shell">
    <nav className="topbar"><Link href="/" className="brand">grow<span>+</span></Link><div className="navlinks">{products.slice(0,6).map(p=><button key={p.id} className={tab===p.id?"nav-active":""} onClick={()=>setTab(p.id)}>{p.title}</button>)}</div><button className="profile">Account</button></nav>
-   <section className="hero"><div><p className="eyebrow">INDIAN MARKETS</p><h1>Investing, trading & analysis in one place.</h1><p className="muted">A Groww-inspired research terminal with Claude AI analysis built into every stock page.</p></div><div className="market-pulse"><span>● Market data</span><b>{loading?"Loading":error?"Unavailable":"Connected"}</b></div></section>
+   <section className="hero"><div><p className="eyebrow">INDIAN MARKETS</p><h1>Investing, trading & analysis in one place.</h1><p className="muted">A Groww-inspired research terminal with Claude AI analysis built into every stock page.</p></div><div className="market-pulse"><span>● Market data</span><b>{loading?"Loading":error?"Unavailable":"Live"}</b></div></section>
    <div className="searchbar"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search stocks, ETFs, mutual funds, IPOs..." /><kbd>⌘ K</kbd></div>
 
    <section className="product-strip">{products.map(p=><button key={p.id} className={`product-card ${tab===p.id?"selected":""}`} onClick={()=>setTab(p.id)}><span className="product-icon">{p.icon}</span><b>{p.title}</b><small>{p.subtitle}</small></button>)}</section>
