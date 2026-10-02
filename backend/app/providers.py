@@ -1,32 +1,35 @@
 from .models import Quote, NewsArticle
 from .settings import settings
-import httpx
+import yfinance as yf
 
-FREE_API="https://indian-stock-market-api.onrender.com"
+SYMBOLS=["RELIANCE","TCS","HDFCBANK","INFY","ICICIBANK","ITC","SBIN","ADANIENT","TATAMOTORS","WIPRO","BHARTIARTL","LT","KOTAKBANK","AXISBANK","MARUTI","SUNPHARMA","HCLTECH","TITAN","NTPC","POWERGRID","ONGC","COALINDIA","BEL","TECHM","M&M","BAJFINANCE","BAJAJFINSV","INDUSINDBK","HINDUNILVR","ASIANPAINT","ULTRACEMCO","NESTLEIND","TATASTEEL","JSWSTEEL","ADANIPORTS","HINDALCO","CIPLA","DRREDDY","EICHERMOT","GRASIM","DIVISLAB","APOLLOHOSP","BRITANNIA","HEROMOTOCO","TATACONSUM","SBILIFE","HDFCLIFE","TRENT","SHRIRAMFIN"]
 
 class FreeMarketProvider:
     def quotes(self)->list[Quote]:
+        out=[]
         try:
-            data=httpx.get(f"{FREE_API}/stock/list?symbols=RELIANCE.NS,TCS.NS,HDFCBANK.NS,INFY.NS,ICICIBANK.NS,ITC.NS,SBIN.NS,ADANIENT.NS,TATAMOTORS.NS,WIPRO.NS",timeout=8).json()
-            rows=data if isinstance(data,list) else data.get("data",[])
-            out=[]
-            for x in rows:
-                symbol=str(x.get("symbol") or x.get("ticker") or "").replace(".NS","").replace(".BO","")
-                price=x.get("price") or x.get("ltp") or x.get("last_price")
-                change=x.get("change_percent") or x.get("change_pct") or x.get("percent_change") or 0
-                if symbol and price is not None:
-                    out.append(Quote(symbol=symbol,name=x.get("name",symbol),exchange="NSE",price=float(price),change_pct=float(change)))
-            return out
+            data=yf.download([s+".NS" for s in SYMBOLS],period="5d",interval="1d",group_by="ticker",auto_adjust=False,progress=False,threads=True)
+            for s in SYMBOLS:
+                try:
+                    frame=data[s+".NS"].dropna()
+                    if frame.empty: continue
+                    last=frame.iloc[-1]
+                    close=float(last["Close"])
+                    previous=float(frame.iloc[-2]["Close"]) if len(frame)>1 else close
+                    change=(close/previous-1)*100 if previous else 0
+                    out.append(Quote(symbol=s,name=s,exchange="NSE",price=close,change_pct=change,volume=int(last["Volume"])))
+                except Exception:
+                    continue
         except Exception:
-            return []
+            pass
+        return out
 
     def news(self,symbol:str)->list[NewsArticle]:
         return []
 
 class DemoMarketProvider:
     def quotes(self)->list[Quote]:
-        data=[("RELIANCE","Reliance Industries","NSE",2920.10,2.41),("TCS","Tata Consultancy Services","NSE",3988.20,1.82),("HDFCBANK","HDFC Bank","NSE",1784.30,1.37),("INFY","Infosys","NSE",1620.50,0.94),("ICICIBANK","ICICI Bank","NSE",1422.60,0.71),("ITC","ITC","NSE",511.30,0.35),("SBIN","State Bank of India","NSE",842.20,-0.44),("ADANIENT","Adani Enterprises","NSE",2460.80,-1.18),("TATAMOTORS","Tata Motors","NSE",1011.40,-2.05),("WIPRO","Wipro","NSE",526.90,-2.76)]
-        return [Quote(symbol=s,name=n,exchange=e,price=p,change_pct=c) for s,n,e,p,c in data]
+        return [Quote(symbol=s,name=s,exchange="NSE",price=0,change_pct=0) for s in SYMBOLS]
     def news(self,symbol:str)->list[NewsArticle]:
         return []
 
