@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # Live market feed. Never commit the access token; set it as a Railway secret.
     upstox_access_token: str = ""
     upstox_instrument_keys: str = ""
-    upstox_max_instruments: int = 5000
+    upstox_max_instruments: int = 2000
 
     @property
     def cors_origins_list(self) -> list[str]:
