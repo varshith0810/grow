@@ -1,19 +1,29 @@
 # Indian Market Analytics
 
-Zero-budget Indian stock analytics dashboard.
+Groww-inspired Indian market research terminal with live market streaming and Claude-powered stock analysis.
 
-## Free-data mode
-The default market provider is a public no-key NSE/BSE API. Its project documents free REST access to NSE/BSE prices and symbols under MIT licensing. This is a community/public service, so availability, latency, coverage and rate limits are not guaranteed.
+## Live market data
 
-Historical/chart data can use Yahoo Finance through yfinance. News can be sourced from public RSS feeds. No paid market-data subscription is required for development.
+The production live-feed path uses the Upstox V3 MarketDataStreamer over WebSocket. Upstox provides real-time LTPC updates and maintains an instrument master containing NSE/BSE contracts. The app loads NSE equity instrument keys automatically when `UPSTOX_INSTRUMENT_KEYS` is empty. citeturn1search4turn2search0
 
-The app intentionally does not scrape NSE/BSE HTML pages.
+Set these server-side secrets/environment variables:
 
-## Zero-budget caveat
-Free public feeds may be delayed, rate-limited, incomplete, or temporarily unavailable. This is not an exchange-certified tick feed and should not be used for trade execution.
+- `UPSTOX_ACCESS_TOKEN` — required to enable the live stream.
+- `UPSTOX_INSTRUMENT_KEYS` — optional comma-separated instrument keys; leave empty for automatic NSE equity discovery.
+- `UPSTOX_MAX_INSTRUMENTS` — maximum subscription count; the code caps this at the provider's documented limit.
+
+The backend keeps the latest ticks in memory and exposes them through `/api/market/stream` as Server-Sent Events. The frontend consumes the stream without polling once per second.
+
+**Important:** a live exchange/broker feed is different from the old free yfinance/public-feed fallback. Data access, subscription limits, display rights and commercial terms are controlled by the provider. Do not publish or expose your Upstox access token.
+
+## Free-data fallback
+
+Without `UPSTOX_ACCESS_TOKEN`, the app falls back to the existing public market provider for development and yfinance for historical data. Free public feeds may be delayed, rate-limited, incomplete, or temporarily unavailable.
 
 ## AI
-Amazon Bedrock is optional. Bedrock itself is not guaranteed to be zero-cost; keep it disabled until your AWS account has an applicable free/credit allowance. The prediction service falls back to NEUTRAL when unavailable.
+
+Amazon Bedrock is optional. The prediction service uses Claude for on-demand analysis of recent price behaviour, technical indicators and news. AI output is informational and does not guarantee future returns.
 
 ## Run
-Copy .env.example to .env, then start backend/frontend. Set NEXT_PUBLIC_API_URL for a deployed frontend.
+
+Copy `.env.example` to `.env`, then start backend/frontend. For Railway, add the live-feed variables to the backend service as secrets and redeploy.
