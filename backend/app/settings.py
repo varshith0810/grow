@@ -5,12 +5,17 @@ class Settings(BaseSettings):
     app_env: str = "development"
     cors_origins: str = "http://localhost:3000"
     api_port: int = 8000
-    market_data_provider: str = "free"
+    market_data_provider: str = "upstox"
     news_provider: str = "free"
     aws_region: str = "ap-south-1"
     bedrock_model_id: str = "anthropic.claude-opus-5-20260724-v1:0"
     database_url: str = "postgresql://market:market@localhost:5432/market"
     redis_url: str = "redis://localhost:6379/0"
+
+    # Live market feed. Never commit the access token; set it as a Railway secret.
+    upstox_access_token: str = ""
+    upstox_instrument_keys: str = ""
+    upstox_max_instruments: int = 5000
 
     @property
     def cors_origins_list(self) -> list[str]:
