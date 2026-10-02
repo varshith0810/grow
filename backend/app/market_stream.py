@@ -112,7 +112,7 @@ class MarketStreamManager:
             self._streamer.on("message", self._on_message)
             self._streamer.on("error", self._on_error)
             self._streamer.on("close", self._on_close)
-            self._streamer.auto_reconnect(True, 5, 0)
+            self._streamer.auto_reconnect(True, 5, 10)
             self._streamer.connect()
         except Exception as exc:
             self._last_error = str(exc)
