@@ -6,7 +6,10 @@ async function proxy(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
-  const backend = process.env.BACKEND_API_URL?.replace(/\/$/, "");
+  const configuredBackend = process.env.BACKEND_API_URL?.trim();
+  const backend = configuredBackend
+    ?.replace(/\/$/, "")
+    .replace(/\/api$/, "");
 
   if (!backend) {
     return NextResponse.json(
