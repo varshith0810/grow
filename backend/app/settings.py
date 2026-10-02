@@ -9,11 +9,12 @@ class Settings(BaseSettings):
     news_provider: str = "free"
     aws_region: str = "ap-south-1"
     bedrock_model_id: str = "anthropic.claude-opus-5-20260724-v1:0"
+    bedrock_enabled: bool = False
     database_url: str = "postgresql://market:market@localhost:5432/market"
     redis_url: str = "redis://localhost:6379/0"
 
     # Live market feed. Never commit the access token; set it as a Railway secret.
-    upstox_access_token: str = ""
+    upstox_analytics_token: str = ""
     upstox_instrument_keys: str = ""
     upstox_max_instruments: int = 2000
 
