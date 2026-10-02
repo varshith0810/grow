@@ -4,7 +4,7 @@ Groww-inspired Indian market research terminal with live market streaming and Cl
 
 ## Live market data
 
-The production live-feed path uses the Upstox V3 MarketDataStreamer over WebSocket. Upstox provides real-time LTPC updates and maintains an instrument master containing NSE/BSE contracts. The app loads NSE equity instrument keys automatically when `UPSTOX_INSTRUMENT_KEYS` is empty. citeturn1search4turn2search0
+The production live-feed path uses the Upstox V3 MarketDataStreamer over WebSocket. Upstox provides real-time LTPC updates and maintains an instrument master containing NSE/BSE contracts. The app loads NSE equity instrument keys automatically when `UPSTOX_INSTRUMENT_KEYS` is empty.
 
 Set these server-side secrets/environment variables:
 
