@@ -19,7 +19,10 @@ async function proxy(
   }
 
   const { path } = await params;
-  const target = `${backend}/${path.join("/")}${request.nextUrl.search}`;
+
+  // The catch-all route is mounted at /api/*, so `path` contains only
+  // the portion after /api. FastAPI exposes its API under /api.
+  const target = `${backend}/api/${path.join("/")}${request.nextUrl.search}`;
 
   try {
     const response = await fetch(target, {
