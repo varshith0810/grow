@@ -1,28 +1,19 @@
 # Indian Market Analytics
 
-Simple Indian stock-market analytics platform with live-ready rankings, charts, news and Amazon Bedrock AI forecasts.
+Zero-budget Indian stock analytics dashboard.
 
-## Stack
-- Frontend: Next.js + TypeScript
-- Backend: FastAPI + Python
-- AI: Amazon Bedrock / Claude Opus 5
-- Storage: PostgreSQL-ready
-- Cache: Redis-ready
+## Free-data mode
+The default market provider is a public no-key NSE/BSE API. Its project documents free REST access to NSE/BSE prices and symbols under MIT licensing. This is a community/public service, so availability, latency, coverage and rate limits are not guaranteed.
 
-## Safety
-Use a licensed market-data provider for production. AI forecasts are informational and not guaranteed investment outcomes.
+Historical/chart data can use Yahoo Finance through yfinance. News can be sourced from public RSS feeds. No paid market-data subscription is required for development.
 
-## Structure
-`frontend/` dashboard UI
-`backend/` API and domain services
-`backend/tests/` API tests
-`docker-compose.yml` local stack
+The app intentionally does not scrape NSE/BSE HTML pages.
 
-## Production data
-The repository does not scrape NSE/BSE pages. NSE provides real-time data directly and through authorized vendors. TrueData currently advertises authorized NSE/BSE real-time WebSocket and historical REST market-data APIs. Configure MARKET_DATA_PROVIDER=truedata only after subscribing to the appropriate service and storing credentials as deployment secrets.
+## Zero-budget caveat
+Free public feeds may be delayed, rate-limited, incomplete, or temporarily unavailable. This is not an exchange-certified tick feed and should not be used for trade execution.
 
 ## AI
-Set AWS_REGION and BEDROCK_MODEL_ID and grant the runtime role only the required Amazon Bedrock permissions. Forecasts are informational and do not execute trades or guarantee outcomes.
+Amazon Bedrock is optional. Bedrock itself is not guaranteed to be zero-cost; keep it disabled until your AWS account has an applicable free/credit allowance. The prediction service falls back to NEUTRAL when unavailable.
 
-## Frontend deployment
-Set NEXT_PUBLIC_API_URL to the public backend URL; never hard-code localhost in production.
+## Run
+Copy .env.example to .env, then start backend/frontend. Set NEXT_PUBLIC_API_URL for a deployed frontend.
