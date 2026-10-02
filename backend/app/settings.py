@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     aws_region: str = "ap-south-1"
     bedrock_model_id: str = "anthropic.claude-opus-5-20260724-v1:0"
     bedrock_enabled: bool = False
+    bedrock_enabled: bool = False
     database_url: str = "postgresql://market:market@localhost:5432/market"
     redis_url: str = "redis://localhost:6379/0"
 
