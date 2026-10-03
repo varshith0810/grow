@@ -89,5 +89,5 @@ function IPOSection(){
    <p className="muted" style={{fontSize:12}}>IPO information is fetched from the public NSE issue feed when available; verify the exchange page before applying.</p>
  </section>
 }
-function IPORow({data,status}:{data:string[];status:"OPEN"|"UPCOMING"}){return <article className="ipo-row"><div><b>{data[0]}</b><small>{data[1]} · {data[2]} → {data[3]}</small></div><span className={status==="OPEN"?"ipo-open":"ipo-upcoming"}>{status}</span><strong>{data[4]}</strong></article>}
+function IPORow({data,status}:{data:any;status:"OPEN"|"UPCOMING"}){return <article className="ipo-row"><div><b>{data.company}</b><small>{data.board} · {data.open_date||"To be announced"}{data.close_date?" → "+data.close_date:""}</small></div><span className={status==="OPEN"?"ipo-open":"ipo-upcoming"}>{status}</span><strong>{data.price_band||"TBA"}</strong></article>}
 function FeatureCard({title,text}:{title:string;text:string}){return <article className="feature-card"><span>✦</span><h3>{title}</h3><p>{text}</p></article>}
