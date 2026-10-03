@@ -1,29 +1,86 @@
 # Indian Market Analytics
 
-Groww-inspired Indian market research terminal with live market streaming and Claude-powered stock analysis.
+Groww-inspired Indian market research terminal with a simple public market-data dashboard and Claude-powered stock analysis.
 
-## Live market data
+## Architecture
 
-The production live-feed path uses the Upstox V3 MarketDataStreamer over WebSocket. Upstox provides real-time LTPC updates and maintains an instrument master containing NSE/BSE contracts. The app loads NSE equity instrument keys automatically when `UPSTOX_INSTRUMENT_KEYS` is empty.
+- **Frontend:** Next.js
+- **Backend:** FastAPI
+- **Market data:** Yahoo Finance public data + WebSocket stream
+- **AI analysis:** Amazon Bedrock / Claude
+- **Transport:** REST + Server-Sent Events
+- **Deployment:** Railway-compatible Docker services
 
-Set these server-side secrets/environment variables:
+## Live market dashboard
 
-- `UPSTOX_ANALYTICS_TOKEN` — free read-only Analytics Token used to enable the live stream.
-- `UPSTOX_INSTRUMENT_KEYS` — optional comma-separated instrument keys; leave empty for automatic NSE equity discovery.
-- `UPSTOX_MAX_INSTRUMENTS` — maximum subscription count; the code caps this at the provider's documented limit.
+The dashboard uses Yahoo Finance's public WebSocket support for live price updates and yfinance for historical OHLCV data. No Upstox, Zerodha, Angel One, Groww or other broker API is required.
 
-The backend keeps the latest ticks in memory and exposes them through `/api/market/stream` as Server-Sent Events. The frontend consumes the stream without polling once per second.
+The backend exposes:
 
-**Important:** a live exchange/broker feed is different from the old free yfinance/public-feed fallback. Data access, subscription limits, display rights and commercial terms are controlled by the provider. Do not publish or expose your Upstox access token.
+- `GET /api/market/quotes`
+- `GET /api/market/live/status`
+- `GET /api/market/stream`
+- `GET /api/market/rankings`
+- `GET /api/stocks/{symbol}`
+- `GET /api/stocks/{symbol}/history`
 
-## Free-data fallback
+The frontend receives live updates through SSE instead of repeatedly polling the dashboard.
 
-Without `UPSTOX_ANALYTICS_TOKEN`, the app falls back to the existing public market provider for development and yfinance for historical data. Free public feeds may be delayed, rate-limited, incomplete, or temporarily unavailable.
+**Data note:** Yahoo Finance/yfinance is a public-data solution intended for research/personal use. It is not an exchange-direct feed and should not be represented as guaranteed exchange tick data. urlyfinance documentationhttps://ranaroussi.github.io/yfinance/
 
-## AI
+## Claude stock analysis
 
-Amazon Bedrock is optional and disabled by default. With the default settings, stock analysis uses a local technical model over public historical data and does not call a paid AI service. Set `BEDROCK_ENABLED=true` only if you intentionally have AWS credits/budget.
+Stock analysis is handled by Amazon Bedrock's runtime Converse API. The backend collects public historical market data and recent news, builds a quantitative context, and sends that context to Claude. Claude returns structured JSON containing:
 
-## Run
+- signal classification
+- confidence
+- time horizon
+- summary
+- rationale
+- risks
+- technical score
+- news sentiment
 
-Copy `.env.example` to `.env`, then start backend/frontend. For Railway, add the live-feed variables to the backend service as secrets and redeploy.
+Bedrock is created lazily only when an analysis request is made. AWS credentials never belong in the frontend or GitHub repository.
+
+## Railway variables
+
+### Backend
+
+```text
+MARKET_DATA_PROVIDER=yahoo
+AWS_REGION=us-east-1
+BEDROCK_ENABLED=true
+BEDROCK_MODEL_ID=global.anthropic.claude-opus-5
+CORS_ORIGINS=https://YOUR-FRONTEND-DOMAIN
+```
+
+Configure AWS credentials as Railway secrets. Never commit them.
+
+### Frontend
+
+Keep the existing backend URL/proxy configuration. No market-data token is required in the frontend.
+
+## Zero-broker design
+
+There are intentionally **no Upstox credentials, broker SDKs, trading APIs, or order-placement APIs** in this project.
+
+This project is a market research/analytics dashboard. It does not execute trades.
+
+## Run locally
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+Then start the Next.js frontend.
+
+## Security
+
+- Secrets are server-side only.
+- AWS credentials must be Railway secrets.
+- No market-data credentials are shipped to the browser.
+- No trading/order endpoint is exposed.
+- Claude receives computed market context rather than direct browser access.
