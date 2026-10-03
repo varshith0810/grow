@@ -9,7 +9,14 @@ from .settings import settings
 
 class BedrockPredictor:
     def __init__(self):
-        self.client = boto3.client("bedrock-runtime", region_name=settings.aws_region) if settings.bedrock_enabled else None
+        self.client = None
+
+    def _client(self):
+        if not settings.bedrock_enabled:
+            return None
+        if self.client is None:
+            self.client = boto3.client("bedrock-runtime", region_name=settings.aws_region)
+        return self.client
 
     @staticmethod
     def _rsi(closes, period=14):
@@ -86,7 +93,8 @@ class BedrockPredictor:
     def predict(self, symbol: str, timeframe: str):
         try:
             context = self._context(symbol)
-            if self.client is None:
+            client = self._client()
+            if client is None:
                 return self._local_prediction(context, timeframe)
             prompt = f"""You are a financial-market analysis assistant for an Indian stock analytics application.
 Use the supplied quantitative market data and recent news as evidence. Do not invent prices, news, indicators, or facts.
@@ -97,7 +105,7 @@ Never claim certainty and never give personalized financial advice.
 Timeframe: {timeframe}
 Market context: {json.dumps(context, ensure_ascii=False)}
 """
-            response = self.client.converse(
+            response = client.converse(
                 modelId=settings.bedrock_model_id,
                 messages=[{"role": "user", "content": [{"text": prompt}]}],
                 inferenceConfig={"maxTokens": 700, "temperature": 0.1},
