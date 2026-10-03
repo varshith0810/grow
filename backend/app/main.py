@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .settings import settings
-from .routes import market, stocks, news, predictions
+from .routes import market, stocks, news, predictions, ipos
 from .market_stream import market_stream
 
 app = FastAPI(title="Indian Market Analytics API", version="1.2.0")
@@ -18,7 +18,7 @@ app.add_middleware(
 app.include_router(market.router, prefix="/api/market", tags=["market"])
 app.include_router(stocks.router, prefix="/api/stocks", tags=["stocks"])
 app.include_router(news.router, prefix="/api/news", tags=["news"])
-app.include_router(predictions.router, prefix="/api/predictions", tags=["predictions"])
+app.include_router(predictions.router, prefix="/api/predictions", tags=["predictions"])\napp.include_router(ipos.router, prefix="/api/ipos", tags=["ipos"])
 
 
 @app.on_event("startup")
