@@ -26,7 +26,7 @@ The backend exposes:
 
 The frontend receives live updates through SSE instead of repeatedly polling the dashboard.
 
-**Data note:** Yahoo Finance/yfinance is a public-data solution intended for research/personal use. It is not an exchange-direct feed and should not be represented as guaranteed exchange tick data. urlyfinance documentationhttps://ranaroussi.github.io/yfinance/
+**Data note:** Yahoo Finance/yfinance is a public-data solution intended for research/personal use. It is not an exchange-direct feed and should not be represented as guaranteed exchange tick data.
 
 ## Claude stock analysis
 
