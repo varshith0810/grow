@@ -77,29 +77,16 @@ export default function Home(){
 
 function StockRow({q,watched,onWatch}:{q:Quote;watched:boolean;onWatch:()=>void}){return <div className="stock-row"><button className="star" onClick={onWatch}>{watched?"★":"☆"}</button><Link href={`/stock/${q.symbol}`} className="ticker"><b>{q.symbol}</b><small>{q.name}</small></Link><span className="exchange">{q.exchange}</span><strong>{`₹${q.price.toLocaleString("en-IN",{maximumFractionDigits:2})}`}</strong><em className={q.change_pct>=0?"up":"down"}>{q.change_pct>=0?"+":""}{q.change_pct.toFixed(2)}%</em></div>}
 function IPOSection(){
- const open=[
-  ["Nityas Gems & Jewellery","Mainboard","30 Sep 2026","05 Oct 2026","₹70–₹75"],
-  ["Vishal Nirmiti","Mainboard","30 Sep 2026","05 Oct 2026","₹208–₹220"],
-  ["EverestIMS Technologies","SME","29 Sep 2026","05 Oct 2026","₹80–₹85"],
-  ["Shree TNB Polymers","SME","28 Sep 2026","05 Oct 2026","₹50–₹53"],
-  ["Dove Soft","SME","30 Sep 2026","05 Oct 2026","₹104–₹111"],
-  ["Omara Ventures","SME","30 Sep 2026","05 Oct 2026","₹296–₹311"],
-  ["Sollfege Smart Electronics","SME","30 Sep 2026","05 Oct 2026","₹55"],
-  ["SJP Ultrasonic","SME","30 Sep 2026","05 Oct 2026","₹67"],
-  ["Eventions","SME","30 Sep 2026","05 Oct 2026","₹112–₹118"],
-  ["Paramount Syntex","SME","30 Sep 2026","06 Oct 2026","₹119–₹127"],
- ];
- const upcoming=[
-  ["R K Fashion Accessories","SME","05 Oct 2026","—","TBA"],
-  ["Reliance JIO","Mainboard","To be announced","—","TBA"],
- ];
+ const [data,setData]=useState<{open:any[];upcoming:any[]}>({open:[],upcoming:[]});
+ const [loading,setLoading]=useState(true);
+ useEffect(()=>{fetch("/api/ipos",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setData(d)).catch(()=>{}).finally(()=>setLoading(false))},[]);
  return <section className="feature-page">
-   <div className="section-head"><div><p className="eyebrow">PRIMARY MARKET</p><h2>IPO</h2><p className="muted">Open and upcoming IPOs. Dates and issue details are exchange/issuer dependent.</p></div></div>
+   <div className="section-head"><div><p className="eyebrow">PRIMARY MARKET</p><h2>IPO</h2><p className="muted">Currently open and upcoming IPO issues.</p></div></div>
    <div className="market-grid">
-    <section className="panel"><div className="panel-title"><h3>Open IPOs</h3><span>{open.length} shown</span></div>{open.map((x,i)=><IPORow key={i} data={x} status="OPEN"/>)}</section>
-    <section className="panel"><div className="panel-title"><h3>Upcoming IPOs</h3><span>{upcoming.length} shown</span></div>{upcoming.map((x,i)=><IPORow key={i} data={x} status="UPCOMING"/>)}</section>
+    <section className="panel"><div className="panel-title"><h3>Open IPOs</h3><span>{loading?"Loading…":data.open.length+" issues"}</span></div>{data.open.map((x,i)=><IPORow key={i} data={x} status="OPEN"/>)}{!loading&&!data.open.length&&<p className="muted">No open IPOs found.</p>}</section>
+    <section className="panel"><div className="panel-title"><h3>Upcoming IPOs</h3><span>{loading?"Loading…":data.upcoming.length+" issues"}</span></div>{data.upcoming.map((x,i)=><IPORow key={i} data={x} status="UPCOMING"/>)}{!loading&&!data.upcoming.length&&<p className="muted">No upcoming IPOs found.</p>}</section>
    </div>
-   <p className="muted" style={{fontSize:12}}>IPO data is a public-market reference feed and should be refreshed against NSE/BSE before applying.</p>
+   <p className="muted" style={{fontSize:12}}>IPO information is fetched from the public NSE issue feed when available; verify the exchange page before applying.</p>
  </section>
 }
 function IPORow({data,status}:{data:string[];status:"OPEN"|"UPCOMING"}){return <article className="ipo-row"><div><b>{data[0]}</b><small>{data[1]} · {data[2]} → {data[3]}</small></div><span className={status==="OPEN"?"ipo-open":"ipo-upcoming"}>{status}</span><strong>{data[4]}</strong></article>}
