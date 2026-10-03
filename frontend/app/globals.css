@@ -3,3 +3,5 @@
 
 /* Bullish candles = blue, bearish candles = red */
 .candle-up{color:#2563eb}.candle-down{color:#dc2626}
+
+.ipo-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid #edf0ee}.ipo-row:last-child{border-bottom:0}.ipo-row small{display:block;color:#7a837e;margin-top:4px;font-size:11px}.ipo-row strong{white-space:nowrap;font-size:13px}.ipo-open,.ipo-upcoming{font-size:10px;font-weight:800;letter-spacing:.06em;border-radius:99px;padding:6px 9px}.ipo-open{color:#087a52;background:#e8f7f0}.ipo-upcoming{color:#66500a;background:#fff7d6}
