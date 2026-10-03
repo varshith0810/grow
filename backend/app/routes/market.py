@@ -1,5 +1,7 @@
 import asyncio
 import json
+from datetime import datetime, time
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
@@ -9,17 +11,32 @@ from ..providers import MarketProviderRegistry
 
 router = APIRouter()
 providers = MarketProviderRegistry()
+IST = ZoneInfo("Asia/Kolkata")
+
+
+def _market_open() -> bool:
+    now = datetime.now(IST)
+    return now.weekday() < 5 and time(9, 15) <= now.time() <= time(15, 30)
+
+
+def _fallback_quotes():
+    return [q.model_dump() for q in providers.market.quotes()]
 
 
 @router.get("/quotes")
 def quotes():
     live = market_stream.snapshot()
-    return live if live else [q.model_dump() for q in providers.market.quotes()]
+    fallback = _fallback_quotes()
+    by_symbol = {q["symbol"]: q for q in fallback}
+    by_symbol.update({q["symbol"]: q for q in live})
+    return list(by_symbol.values())
 
 
 @router.get("/live/status")
 def live_status():
-    return market_stream.status()
+    status = market_stream.status()
+    status["market_open"] = _market_open()
+    return status
 
 
 @router.get("/stream")
@@ -29,7 +46,11 @@ async def stream(symbols: str = Query("", description="Comma-separated NSE symbo
     async def event_stream():
         last_payload = ""
         while True:
-            snapshot = market_stream.snapshot(requested or None)
+            live = market_stream.snapshot(requested or None)
+            fallback = _fallback_quotes()
+            by_symbol = {q["symbol"]: q for q in fallback}
+            by_symbol.update({q["symbol"]: q for q in live})
+            snapshot = list(by_symbol.values())
             payload = json.dumps(snapshot, separators=(",", ":"))
             if payload != last_payload:
                 yield f"event: quotes\ndata: {payload}\n\n"
@@ -45,6 +66,6 @@ async def stream(symbols: str = Query("", description="Comma-separated NSE symbo
 
 @router.get("/rankings")
 def rankings(period: str = Query("day", pattern="^(live|day|weekly|yearly)$")):
-    quotes = market_stream.snapshot() or [q.model_dump() for q in providers.market.quotes()]
+    quotes = quotes()
     ordered = sorted(quotes, key=lambda q: q["change_pct"], reverse=True)
     return {"period": period, "top": ordered[:10], "worst": ordered[-10:][::-1]}
