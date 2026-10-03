@@ -71,11 +71,7 @@ export default function Home(){
      <section className="panel full"><div className="panel-title"><h3>All Nifty 50 stocks</h3><span>{filtered.length} stocks</span></div>{filtered.map(q=><StockRow key={q.symbol} q={q} watched={watch.includes(q.symbol)} onWatch={()=>toggleWatch(q.symbol)} />)}</section>
    </>}
 
-   {tab==="portfolio" && <section className="feature-page"><p className="eyebrow">YOUR MONEY</p><h2>Portfolio</h2><div className="portfolio-total">{money(0)} <span>Paper portfolio</span></div><div className="empty-state"><b>No holdings yet</b><p>Add stocks to your watchlist, then connect a broker when you are ready for live orders.</p><button>Explore stocks</button></div>{watchQuotes.length>0&&<div className="panel"><h3>Watchlist</h3>{watchQuotes.map(q=><StockRow key={q.symbol} q={q} watched onWatch={()=>toggleWatch(q.symbol)}/>)}</div>}</section>}
-
-   {tab!=="stocks"&&tab!=="portfolio"&&<section className="feature-page"><p className="eyebrow">PRODUCT</p><h2>{products.find(p=>p.id===tab)?.title}</h2><p className="muted">{products.find(p=>p.id===tab)?.description}</p><div className="feature-grid"><FeatureCard title="Discover" text="Browse instruments, categories and market data."/><FeatureCard title="Compare" text="Compare performance, risk and key metrics."/><FeatureCard title="Track" text="Add instruments to your personal watchlist."/><FeatureCard title="Analyse" text="Use charts, fundamentals and Claude-powered research where supported."/><FeatureCard title="Orders" text="Order-entry UI is ready for broker/API integration; no real-money order is placed by this demo."/><FeatureCard title="Alerts" text="Set price and percentage-change alerts in the next iteration." /></div></section>}
-
-   <footer><span>grow+ research terminal</span><span>Market data is for research only. AI output is not guaranteed financial advice.</span></footer>
+   {tab==="ipo" && <IPOSection />}\n\n   <footer><span>grow+ research terminal</span><span>Market data is for research only. AI output is not guaranteed financial advice.</span></footer>
  </main>
 }
 
