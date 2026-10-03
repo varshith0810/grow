@@ -1,7 +1,7 @@
 import asyncio
 import json
 from datetime import datetime, time
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo\nimport time
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
@@ -10,7 +10,7 @@ from ..market_stream import market_stream
 from ..providers import MarketProviderRegistry
 
 router = APIRouter()
-providers = MarketProviderRegistry()
+providers = MarketProviderRegistry()\n_fallback_cache = []\n_fallback_at = 0.0
 IST = ZoneInfo("Asia/Kolkata")
 
 
