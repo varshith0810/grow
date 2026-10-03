@@ -19,6 +19,16 @@ class BedrockPredictor:
         return self.client
 
     @staticmethod
+    def _ema(values, period=20):
+        if not values:
+            return 0.0
+        alpha = 2 / (period + 1)
+        ema = values[0]
+        for value in values[1:]:
+            ema = alpha * value + (1 - alpha) * ema
+        return ema
+
+    @staticmethod
     def _rsi(closes, period=14):
         if len(closes) <= period:
             return None
@@ -39,28 +49,56 @@ class BedrockPredictor:
         if hist.empty:
             raise ValueError("No market data")
         closes = [float(x) for x in hist["Close"].tolist()]
-        volumes = [float(x) for x in hist["Volume"].tolist()]\n        highs = [float(x) for x in hist["High"].tolist()]\n        lows = [float(x) for x in hist["Low"].tolist()]
+        volumes = [float(x) for x in hist["Volume"].tolist()]
+        highs = [float(x) for x in hist["High"].tolist()]
+        lows = [float(x) for x in hist["Low"].tolist()]
         last = closes[-1]
         prev = closes[-2] if len(closes) > 1 else last
         sma20 = sum(closes[-20:]) / min(20, len(closes))
-        sma50 = sum(closes[-50:]) / min(50, len(closes))\n        sma200 = sum(closes[-200:]) / min(200, len(closes))\n        ema20 = self._ema(closes[-100:], 20) if closes else last
+        sma50 = sum(closes[-50:]) / min(50, len(closes))
+        sma200 = sum(closes[-200:]) / min(200, len(closes))
+        ema20 = self._ema(closes[-100:], 20) if closes else last
         rsi = self._rsi(closes) or 50.0
         returns = [(b / a - 1) for a, b in zip(closes[-21:-1], closes[-20:]) if a]
         volatility = math.sqrt(sum((x - sum(returns)/len(returns))**2 for x in returns) / max(1, len(returns)-1)) if returns else 0
-        avg_volume = sum(volumes[-20:]) / min(20, len(volumes))\n        returns = [(b / a - 1) for a, b in zip(closes[-61:-1], closes[-60:]) if a]\n        mean_return = sum(returns) / len(returns) if returns else 0\n        volatility = (sum((x - mean_return) ** 2 for x in returns) / max(1, len(returns) - 1)) ** 0.5 * 100 if returns else 0\n        peak = closes[0]\n        max_drawdown = 0.0\n        for price in closes:\n            peak = max(peak, price)\n            if peak: max_drawdown = min(max_drawdown, (price / peak - 1) * 100)\n        support = min(lows[-60:]) if lows else last\n        resistance = max(highs[-60:]) if highs else last\n        intraday = ticker.history(period="7d", interval="15m", auto_adjust=False).dropna()\n        intraday_closes = [float(x) for x in intraday["Close"].tolist()]
+        avg_volume = sum(volumes[-20:]) / min(20, len(volumes))
+        returns = [(b / a - 1) for a, b in zip(closes[-61:-1], closes[-60:]) if a]
+        mean_return = sum(returns) / len(returns) if returns else 0
+        volatility = (sum((x - mean_return) ** 2 for x in returns) / max(1, len(returns) - 1)) ** 0.5 * 100 if returns else 0
+        peak = closes[0]
+        max_drawdown = 0.0
+        for price in closes:
+            peak = max(peak, price)
+            if peak: max_drawdown = min(max_drawdown, (price / peak - 1) * 100)
+        support = min(lows[-60:]) if lows else last
+        resistance = max(highs[-60:]) if highs else last
+        intraday = ticker.history(period="7d", interval="15m", auto_adjust=False).dropna()
+        intraday_closes = [float(x) for x in intraday["Close"].tolist()]
         query = quote(f"{symbol} India stock")
         feed = feedparser.parse(f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en")
         news = [entry.get("title", "") for entry in feed.entries[:10]]
         return {
-            "symbol": symbol,\n            "history_window": "2y daily + 7d 15m",
+            "symbol": symbol,
+            "history_window": "2y daily + 7d 15m",
             "price": round(last, 2),
             "return_1d_pct": round((last / prev - 1) * 100, 2) if prev else 0,
             "return_20d_pct": round((last / closes[-21] - 1) * 100, 2) if len(closes) > 21 else 0,
             "sma20": round(sma20, 2),
-            "sma50": round(sma50, 2),\n            "sma200": round(sma200, 2),\n            "ema20": round(ema20, 2),
+            "sma50": round(sma50, 2),
+            "sma200": round(sma200, 2),
+            "ema20": round(ema20, 2),
             "rsi14": round(rsi, 2),
-            "volatility_60d": round(volatility, 2),\n            "max_drawdown_2y": round(max_drawdown, 2),\n            "support_60d": round(support, 2),\n            "resistance_60d": round(resistance, 2),
-            "volume_vs_20d_avg_pct": round((volumes[-1] / avg_volume - 1) * 100, 2) if avg_volume else 0,\n            "return_5d_pct": round((last / closes[-6] - 1) * 100, 2) if len(closes) > 5 else 0,\n            "return_1m_pct": round((last / closes[-22] - 1) * 100, 2) if len(closes) > 21 else 0,\n            "return_3m_pct": round((last / closes[-64] - 1) * 100, 2) if len(closes) > 63 else 0,\n            "return_6m_pct": round((last / closes[-127] - 1) * 100, 2) if len(closes) > 126 else 0,\n            "return_1y_pct": round((last / closes[-253] - 1) * 100, 2) if len(closes) > 252 else 0,\n            "recent_15m_observations": len(intraday_closes),
+            "volatility_60d": round(volatility, 2),
+            "max_drawdown_2y": round(max_drawdown, 2),
+            "support_60d": round(support, 2),
+            "resistance_60d": round(resistance, 2),
+            "volume_vs_20d_avg_pct": round((volumes[-1] / avg_volume - 1) * 100, 2) if avg_volume else 0,
+            "return_5d_pct": round((last / closes[-6] - 1) * 100, 2) if len(closes) > 5 else 0,
+            "return_1m_pct": round((last / closes[-22] - 1) * 100, 2) if len(closes) > 21 else 0,
+            "return_3m_pct": round((last / closes[-64] - 1) * 100, 2) if len(closes) > 63 else 0,
+            "return_6m_pct": round((last / closes[-127] - 1) * 100, 2) if len(closes) > 126 else 0,
+            "return_1y_pct": round((last / closes[-253] - 1) * 100, 2) if len(closes) > 252 else 0,
+            "recent_15m_observations": len(intraday_closes),
             "news": news,
         }
 
@@ -84,7 +122,7 @@ class BedrockPredictor:
         rsi = context["rsi14"]
         if rsi >= 70: score -= 8; risks.append("RSI is elevated; reversal risk is higher.")
         elif rsi <= 30: score += 4; risks.append("RSI is low; reversal risk is elevated.")
-        if context["volatility_20d"] > 3: risks.append("Recent daily volatility is elevated.")
+        if context["volatility_60d"] > 3: risks.append("Recent daily volatility is elevated.")
         score = max(0, min(100, score))
         signal = "GREEN" if score >= 62 else "RED" if score <= 38 else "NEUTRAL"
         confidence = max(0.35, min(0.85, 0.35 + abs(score - 50) / 50))
