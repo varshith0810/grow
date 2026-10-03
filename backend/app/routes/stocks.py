@@ -44,7 +44,7 @@ def stock(symbol: str, timeframe: str = Query("1d", pattern="^(live|1m|15m|1h|1d
 def history(
     symbol: str,
     period: str = Query("1y", pattern="^(1d|5d|1mo|3mo|6mo|1y|5y|max)$"),
-    interval: str = Query("1d", pattern="^(1m|5m|15m|30m|1h|1d|1wk|1mo)$"),
+    interval: str = Query("1d", pattern="^(1m|2m|5m|15m|30m|60m|1h|1d|1wk|1mo)$"),
 ):
     try:
         hist = yf.Ticker(symbol.upper() + ".NS").history(period=period, interval=interval, auto_adjust=False)
